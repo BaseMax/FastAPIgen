@@ -5,15 +5,15 @@ from utils.auth import get_api_key
 
 from database import database
 
-from routers import user, item
+from routers import item, user
 
 app = FastAPI()
 
 # Include routers
 
-app.include_router(user.router)
-
 app.include_router(item.router)
+
+app.include_router(user.router)
 
 
 # Startup and shutdown events

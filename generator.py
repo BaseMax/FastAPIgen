@@ -47,7 +47,7 @@ from models import {{ models|join(', ') }}
 ''',
 
     'models.py.j2': '''\
-from sqlalchemy import Table, Column, Integer, String, Float
+from sqlalchemy import Table, Column, Integer, String, Float, MetaData
 
 metadata = MetaData()
 
@@ -181,6 +181,7 @@ async def get_api_key(api_key: str = Header(...)):
 ''',
 
     'requirements.txt.j2': '''\
+aiosqlite
 fastapi
 uvicorn
 pydantic
