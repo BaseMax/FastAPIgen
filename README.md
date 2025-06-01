@@ -1,4 +1,4 @@
-# Py API Generator
+# FastAPIgen (Py API Generator)
 
 **Py API Generator** is a Python-based code generation tool that lets you rapidly scaffold a fully functional FastAPI backend using a simple JSON configuration file.
 
