@@ -1,244 +1,48 @@
-[
-  {
-    "description": "Basic CRUD without auth or db",
-    "config": {
-      "project_name": "test_api",
-      "database": false,
-      "auth": false,
-      "models": [],
-      "routes": [
-        {
-          "resource": "items",
-          "path": "/items",
-          "methods": ["GET", "POST"]
-        }
-      ]
-    },
-    "expected_outcome": "Project generated with basic GET and POST routes for items, no database or authentication."
+{
+  "project_name": "my_api",
+  "database": {
+    "type": "sqlite",
+    "url": "sqlite:///mydb.db"
   },
-  {
-    "description": "CRUD with authentication",
-    "config": {
-      "project_name": "auth_api",
-      "database": false,
-      "auth": true,
-      "models": [],
-      "routes": [
-        {
-          "resource": "items",
-          "path": "/items",
-          "methods": ["GET", "POST"]
-        }
-      ]
+  "auth": true,
+  "models": [
+    {
+      "name": "Item",
+      "fields": {
+        "id": "integer",
+        "name": "string",
+        "price": "float"
+      }
     },
-    "expected_outcome": "Project generated with GET and POST routes for items, including API key authentication."
-  },
-  {
-    "description": "CRUD with database",
-    "config": {
-      "project_name": "db_api",
-      "database": true,
-      "auth": false,
-      "models": [
-        {
-          "name": "Item",
-          "fields": {
-            "id": "int",
-            "name": "str",
-            "price": "float"
-          }
-        }
-      ],
-      "routes": [
-        {
-          "resource": "items",
-          "path": "/items",
-          "methods": ["GET", "POST"]
-        }
-      ]
+    {
+      "name": "User",
+      "fields": {
+        "id": "integer",
+        "username": "string",
+        "email": "string"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "resource": "item",
+      "path": "/items",
+      "methods": ["GET", "POST"]
     },
-    "expected_outcome": "Project generated with GET and POST routes for items, connected to a database (default SQLite)."
-  },
-  {
-    "description": "CRUD with auth and database",
-    "config": {
-      "project_name": "full_api",
-      "database": true,
-      "auth": true,
-      "models": [
-        {
-          "name": "Item",
-          "fields": {
-            "id": "int",
-            "name": "str",
-            "price": "float"
-          }
-        }
-      ],
-      "routes": [
-        {
-          "resource": "items",
-          "path": "/items",
-          "methods": ["GET", "POST"]
-        }
-      ]
+    {
+      "resource": "item",
+      "path": "/items/{id}",
+      "methods": ["GET", "PUT", "DELETE"]
     },
-    "expected_outcome": "Project generated with GET and POST routes for items, including API key authentication and database integration."
-  },
-  {
-    "description": "Routes with path parameters",
-    "config": {
-      "project_name": "param_api",
-      "database": true,
-      "auth": false,
-      "models": [
-        {
-          "name": "Item",
-          "fields": {
-            "id": "int",
-            "name": "str",
-            "price": "float"
-          }
-        }
-      ],
-      "routes": [
-        {
-          "resource": "items",
-          "path": "/items/{id}",
-          "methods": ["GET", "PUT", "DELETE"]
-        }
-      ]
+    {
+      "resource": "user",
+      "path": "/users",
+      "methods": ["GET", "POST"]
     },
-    "expected_outcome": "Project generated with GET, PUT, and DELETE routes for items with path parameters, connected to a database."
-  },
-  {
-    "description": "All HTTP methods",
-    "config": {
-      "project_name": "methods_api",
-      "database": true,
-      "auth": true,
-      "models": [
-        {
-          "name": "Item",
-          "fields": {
-            "id": "int",
-            "name": "str",
-            "price": "float"
-          }
-        }
-      ],
-      "routes": [
-        {
-          "resource": "items",
-          "path": "/items",
-          "methods": ["GET", "POST"]
-        },
-        {
-          "resource": "items",
-          "path": "/items/{id}",
-          "methods": ["GET", "PUT", "DELETE"]
-        }
-      ]
-    },
-    "expected_outcome": "Project generated with full CRUD routes for items, including authentication and database."
-  },
-  {
-    "description": "Multiple resources",
-    "config": {
-      "project_name": "multi_api",
-      "database": true,
-      "auth": true,
-      "models": [
-        {
-          "name": "Item",
-          "fields": {
-            "id": "int",
-            "name": "str",
-            "price": "float"
-          }
-        },
-        {
-          "name": "User",
-          "fields": {
-            "id": "int",
-            "username": "str",
-            "email": "str"
-          }
-        }
-      ],
-      "routes": [
-        {
-          "resource": "items",
-          "path": "/items",
-          "methods": ["GET", "POST"]
-        },
-        {
-          "resource": "users",
-          "path": "/users",
-          "methods": ["GET", "POST"]
-        }
-      ]
-    },
-    "expected_outcome": "Project generated with routes for multiple resources (items and users), including authentication and database."
-  },
-  {
-    "description": "Invalid configuration (missing model)",
-    "config": {
-      "project_name": "invalid_api",
-      "database": true,
-      "auth": false,
-      "models": [
-        {
-          "name": "Item",
-          "fields": {
-            "id": "int",
-            "name": "str",
-            "price": "float"
-          }
-        }
-      ],
-      "routes": [
-        {
-          "resource": "items",
-          "path": "/items",
-          "methods": ["GET", "POST"]
-        },
-        {
-          "resource": "users",
-          "path": "/users",
-          "methods": ["GET", "POST"]
-        }
-      ]
-    },
-    "expected_outcome": "Error: Missing models for resources: users"
-  },
-  {
-    "description": "Database with PostgreSQL",
-    "config": {
-      "project_name": "postgres_api",
-      "database": {
-        "type": "postgresql",
-        "url": "postgresql://user:password@localhost/dbname"
-      },
-      "auth": false,
-      "models": [
-        {
-          "name": "Item",
-          "fields": {
-            "id": "int",
-            "name": "str",
-            "price": "float"
-          }
-        }
-      ],
-      "routes": [
-        {
-          "resource": "items",
-          "path": "/items",
-          "methods": ["GET", "POST"]
-        }
-      ]
-    },
-    "expected_outcome": "Project generated with GET and POST routes for items, connected to a PostgreSQL database."
-  }
-]
+    {
+      "resource": "user",
+      "path": "/users/{id}",
+      "methods": ["GET", "PUT", "DELETE"]
+    }
+  ]
+}
