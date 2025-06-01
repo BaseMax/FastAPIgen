@@ -208,6 +208,14 @@ def generate_project(config_path, output_dir='.'):
         config = json.load(f)
 
     project_name = config['project_name']
+    resources = set(route['resource'] for route in config['routes'])
+    models = {model['name'].lower(): model for model in config.get('models', [])}
+
+    # Validate that all resources have corresponding models
+    missing_models = [resource for resource in resources if resource not in models]
+    if missing_models:
+        raise ValueError(f"Missing models for resources: {', '.join(missing_models)}")
+
     project_dir = os.path.join(output_dir, project_name)
     os.makedirs(project_dir, exist_ok=True)
 
@@ -217,7 +225,6 @@ def generate_project(config_path, output_dir='.'):
         template = env.from_string(templates[template_name])
         return template.render(**context)
 
-    resources = set(route['resource'] for route in config['routes'])
     main_content = render_template('main.py.j2',
         auth=config.get('auth'),
         database=config.get('database'),
@@ -233,10 +240,10 @@ def generate_project(config_path, output_dir='.'):
             database_url = database_config.get('url', f"sqlite:///{project_name}.db")
         else:
             database_url = f"sqlite:///{project_name}.db"
-        models = [model['name'] for model in config.get('models', [])]
+        model_names = [model['name'] for model in config.get('models', [])]
         db_content = render_template('database.py.j2',
             project_name=project_name,
-            models=models,
+            models=model_names,
             database_url=database_url
         )
         with open(os.path.join(project_dir, 'database.py'), 'w') as f:
@@ -258,7 +265,7 @@ def generate_project(config_path, output_dir='.'):
     os.makedirs(router_dir, exist_ok=True)
     for resource in resources:
         resource_routes = [route for route in config['routes'] if route['resource'] == resource]
-        model = next((m for m in config.get('models', []) if m['name'].lower() == resource), None)
+        model = models[resource]  # Safe to access since we validated above
         router_content = render_template('router.py.j2',
             routes=resource_routes,
             model=model,
