@@ -1,5 +1,5 @@
-# my_api-old
-# **/__pycache__
-# my_api/__pycache__/
-# my_api/routers/__pycache__/
-# my_api/utils/__pycache__/
+my_api-old
+**/__pycache__
+my_api/__pycache__/
+my_api/routers/__pycache__/
+my_api/utils/__pycache__/
