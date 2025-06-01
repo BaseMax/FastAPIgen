@@ -1,8 +1,0 @@
-aiosqlite
-fastapi
-uvicorn
-pydantic
-
-databases
-sqlalchemy
-
