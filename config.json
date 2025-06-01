@@ -1,0 +1,22 @@
+{
+  "project_name": "my_api",
+  "database": true,
+  "auth": true,
+  "models": [
+    {
+      "name": "Item",
+      "fields": {
+        "id": "int",
+        "name": "str",
+        "price": "float"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "resource": "items",
+      "path": "/items",
+      "methods": ["GET", "POST"]
+    }
+  ]
+}
