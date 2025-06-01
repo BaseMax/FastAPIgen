@@ -3,32 +3,32 @@ from pydantic import BaseModel
 
 class ItemRequest(BaseModel):
     
-    name: string
+    name: str
     
     price: float
     
 
 class ItemResponse(BaseModel):
     
-    id: integer
+    id: int
     
-    name: string
+    name: str
     
     price: float
     
 
 class UserRequest(BaseModel):
     
-    username: string
+    username: str
     
-    email: string
+    email: str
     
 
 class UserResponse(BaseModel):
     
-    id: integer
+    id: int
     
-    username: string
+    username: str
     
-    email: string
+    email: str
     

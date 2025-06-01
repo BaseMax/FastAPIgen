@@ -12,24 +12,24 @@ from utils.auth import get_api_key
 from database import database
 {% endif %}
 from routers import {{ resources|join(', ') }}
+from contextlib import asynccontextmanager
 
+{% if database %}
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await database.connect()
+    yield
+    await database.disconnect()
+
+app = FastAPI(lifespan=lifespan)
+{% else %}
 app = FastAPI()
+{% endif %}
 
 # Include routers
 {% for resource in resources %}
 app.include_router({{ resource }}.router)
 {% endfor %}
-
-# Startup and shutdown events
-{% if database %}
-@app.on_event("startup")
-async def startup():
-    await database.connect()
-
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
-{% endif %}
 ''',
 
     'database.py.j2': '''\
@@ -69,12 +69,12 @@ from pydantic import BaseModel
 {% for model in models %}
 class {{ model.name }}Request(BaseModel):
     {% for field, typ in model.fields.items() if field != 'id' %}
-    {{ field }}: {{ typ }}
+    {{ field }}: {{ 'int' if typ == 'integer' else 'str' if typ == 'string' else 'float' if typ == 'float' else 'bool' if typ == 'boolean' else typ }}
     {% endfor %}
 
 class {{ model.name }}Response(BaseModel):
     {% for field, typ in model.fields.items() %}
-    {{ field }}: {{ typ }}
+    {{ field }}: {{ 'int' if typ == 'integer' else 'str' if typ == 'string' else 'float' if typ == 'float' else 'bool' if typ == 'boolean' else typ }}
     {% endfor %}
 {% endfor %}
 ''',

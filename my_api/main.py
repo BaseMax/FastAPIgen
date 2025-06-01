@@ -5,23 +5,21 @@ from utils.auth import get_api_key
 
 from database import database
 
-from routers import item, user
+from routers import user, item
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await database.connect()
+    yield
+    await database.disconnect()
+
+app = FastAPI(lifespan=lifespan)
+
 
 # Include routers
 
-app.include_router(item.router)
-
 app.include_router(user.router)
 
-
-# Startup and shutdown events
-
-@app.on_event("startup")
-async def startup():
-    await database.connect()
-
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
+app.include_router(item.router)
