@@ -37,7 +37,7 @@ from databases import Database
 from sqlalchemy import create_engine, MetaData
 import os
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///{{ project_name }}.db")
+DATABASE_URL = os.environ.get("DATABASE_URL", "{{ database_url }}")
 
 database = Database(DATABASE_URL)
 metadata = MetaData()
@@ -80,7 +80,7 @@ class {{ model.name }}Response(BaseModel):
 ''',
 
     'router.py.j2': '''\
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 {% if database %}
 from database import database
 from models import {{ model.name }}
@@ -94,23 +94,76 @@ router = APIRouter()
 
 {% for route in routes %}
 {% for method in route.methods %}
-@router.{{ method.lower() }}("{{ route.path }}")
-async def {{ method.lower() }}_{{ route.path|replace('/', '_')|replace('{', '')|replace('}', '') }}(
-    {% if method in ['POST', 'PUT'] %}{{ model.name.lower() }}: {{ model.name }}Request,{% endif %}
-    {% if auth %}api_key: str = Depends(get_api_key),{% endif %}
-):
+{% if '{' in route.path and '}' in route.path %}
+{% set param = route.path.split('{')[1].split('}')[0] %}
+{% if method == 'GET' %}
+@router.get("{{ route.path }}")
+async def get_{{ model.name.lower() }}({{ param }}: int{% if auth %}, api_key: str = Depends(get_api_key){% endif %}):
     {% if database %}
-    {% if method == 'GET' %}
+    query = {{ model.name }}.select().where({{ model.name }}.c.id == {{ param }})
+    item = await database.fetch_one(query)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item
+    {% else %}
+    # TODO: Implement GET {{ route.path }}
+    return {"message": "GET {{ route.path }}"}
+    {% endif %}
+{% elif method == 'PUT' %}
+@router.put("{{ route.path }}")
+async def update_{{ model.name.lower() }}({{ param }}: int, {{ model.name.lower() }}: {{ model.name }}Request{% if auth %}, api_key: str = Depends(get_api_key){% endif %}):
+    {% if database %}
+    query = {{ model.name }}.select().where({{ model.name }}.c.id == {{ param }})
+    item = await database.fetch_one(query)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    update_query = {{ model.name }}.update().where({{ model.name }}.c.id == {{ param }}).values(**{{ model.name.lower() }}.dict())
+    await database.execute(update_query)
+    return {"message": "Updated"}
+    {% else %}
+    # TODO: Implement PUT {{ route.path }}
+    return {"message": "PUT {{ route.path }}"}
+    {% endif %}
+{% elif method == 'DELETE' %}
+@router.delete("{{ route.path }}")
+async def delete_{{ model.name.lower() }}({{ param }}: int{% if auth %}, api_key: str = Depends(get_api_key){% endif %}):
+    {% if database %}
+    query = {{ model.name }}.select().where({{ model.name }}.c.id == {{ param }})
+    item = await database.fetch_one(query)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    delete_query = {{ model.name }}.delete().where({{ model.name }}.c.id == {{ param }})
+    await database.execute(delete_query)
+    return {"message": "Deleted"}
+    {% else %}
+    # TODO: Implement DELETE {{ route.path }}
+    return {"message": "DELETE {{ route.path }}"}
+    {% endif %}
+{% endif %}
+{% else %}
+{% if method == 'GET' %}
+@router.get("{{ route.path }}")
+async def list_{{ model.name.lower() }}s({% if auth %}api_key: str = Depends(get_api_key){% endif %}):
+    {% if database %}
     query = {{ model.name }}.select()
     return await database.fetch_all(query)
-    {% elif method == 'POST' %}
+    {% else %}
+    # TODO: Implement GET {{ route.path }}
+    return {"message": "GET {{ route.path }}"}
+    {% endif %}
+{% elif method == 'POST' %}
+@router.post("{{ route.path }}")
+async def create_{{ model.name.lower() }}({{ model.name.lower() }}: {{ model.name }}Request{% if auth %}, api_key: str = Depends(get_api_key){% endif %}):
+    {% if database %}
     query = {{ model.name }}.insert().values(**{{ model.name.lower() }}.dict())
     last_id = await database.execute(query)
     return {**{{ model.name.lower() }}.dict(), "id": last_id}
-    {% endif %}
     {% else %}
-    return {"message": "{{ method }} {{ route.path }}"}
+    # TODO: Implement POST {{ route.path }}
+    return {"message": "POST {{ route.path }}"}
     {% endif %}
+{% endif %}
+{% endif %}
 {% endfor %}
 {% endfor %}
 ''',
@@ -134,13 +187,18 @@ pydantic
 {% if database %}
 databases
 sqlalchemy
+{% if database.type == 'postgresql' %}
+asyncpg
+{% elif database.type == 'mysql' %}
+aiomysql
+{% endif %}
 {% endif %}
 ''',
 
     '.env.example.j2': '''\
 API_KEY=your_api_key_here
 {% if database %}
-DATABASE_URL=sqlite:///mydb.db
+DATABASE_URL={{ database.get('url', 'sqlite:///mydb.db') }}
 {% endif %}
 '''
 }
@@ -170,10 +228,16 @@ def generate_project(config_path, output_dir='.'):
         f.write(main_content)
 
     if config.get('database'):
+        database_config = config.get('database', {})
+        if isinstance(database_config, dict):
+            database_url = database_config.get('url', f"sqlite:///{project_name}.db")
+        else:
+            database_url = f"sqlite:///{project_name}.db"
         models = [model['name'] for model in config.get('models', [])]
         db_content = render_template('database.py.j2',
             project_name=project_name,
-            models=models
+            models=models,
+            database_url=database_url
         )
         with open(os.path.join(project_dir, 'database.py'), 'w') as f:
             f.write(db_content)
